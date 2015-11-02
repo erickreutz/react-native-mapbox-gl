@@ -1,41 +1,51 @@
 'use strict'
 
 var React = require('react-native');
-var { NativeModules, requireNativeComponent } = React;
+var {
+  NativeMethodsMixin,
+  PropTypes,
+  NativeModules,
+  requireNativeComponent
+} = React;
 
 var ReactMapView = requireNativeComponent('RCTMapbox', {
     name: 'RCTMapbox',
     propTypes: {
-      accessToken: React.PropTypes.string.isRequired,
-      annotations: React.PropTypes.arrayOf(React.PropTypes.shape({
-        title: React.PropTypes.string,
-        subtitle: React.PropTypes.string,
-        coordinates: React.PropTypes.arrayOf(),
-        alpha: React.PropTypes.number,
-        fillColor: React.PropTypes.string,
-        strokeColor: React.PropTypes.string,
-        strokeWidth: React.PropTypes.number
+      accessToken: PropTypes.string.isRequired,
+      annotations: PropTypes.arrayOf(React.PropTypes.shape({
+        title: PropTypes.string,
+        subtitle: PropTypes.string,
+        coordinates: PropTypes.arrayOf(),
+        alpha: PropTypes.number,
+        fillColor: PropTypes.string,
+        strokeColor: PropTypes.string,
+        strokeWidth: PropTypes.number
       })),
-      centerCoordinate: React.PropTypes.shape({
-        latitude: React.PropTypes.number.isRequired,
-        longitude: React.PropTypes.number.isRequired
+      centerCoordinate: PropTypes.shape({
+        latitude: PropTypes.number.isRequired,
+        longitude: PropTypes.number.isRequired
       }),
-      debugActive: React.PropTypes.bool,
-      direction: React.PropTypes.number,
-      rotationEnabled: React.PropTypes.bool,
-      scrollEnabled: React.PropTypes.bool,
-      showsUserLocation: React.PropTypes.bool,
-      styleUrl: React.PropTypes.string,
-      UserLocationTrackingMode: React.PropTypes.oneOf(['NONE', 'FOLLOW']),
-      zoomEnabled: React.PropTypes.bool,
-      zoomLevel: React.PropTypes.number,
-      onRegionChange: React.PropTypes.func,
+      debugActive: PropTypes.bool,
+      direction: PropTypes.number,
+      rotationEnabled: PropTypes.bool,
+      scrollEnabled: PropTypes.bool,
+      showsUserLocation: PropTypes.bool,
+      styleUrl: PropTypes.string,
+      UserLocationTrackingMode: PropTypes.oneOf(['NONE', 'FOLLOW']),
+      zoomEnabled: PropTypes.bool,
+      zoomLevel: PropTypes.number,
+      onRegionChange: PropTypes.func,
+      onUserLocationUpdate: PropTypes.func,
       // Fix for https://github.com/mapbox/react-native-mapbox-gl/issues/118
-      scaleY: React.PropTypes.number,
-      scaleX: React.PropTypes.number,
-      translateY: React.PropTypes.number,
-      translateX: React.PropTypes.number,
-      rotation: React.PropTypes.number
+      scaleY: PropTypes.number,
+      scaleX: PropTypes.number,
+      translateY: PropTypes.number,
+      translateX: PropTypes.number,
+      rotation: PropTypes.number
+    },
+    nativeOnly: {
+      onChange: true,
+      onUserLocationUpdate: true
     },
     defaultProps() {
       return {
@@ -47,7 +57,7 @@ var ReactMapView = requireNativeComponent('RCTMapbox', {
         direction: 0,
         rotationEnabled: true,
         scrollEnabled: true,
-        showsUserLocation: false,
+        showsUserLocation: true,
         styleUrl: 'asset://styles/streets-v8.json',
         UserLocationTrackingMode: 'NONE',
         zoomEnabled: true,
@@ -57,13 +67,19 @@ var ReactMapView = requireNativeComponent('RCTMapbox', {
 });
 
 var ReactMapViewWrapper = React.createClass({
-  handleOnChange(event) {
-    if (this.props.onRegionChange) this.props.onRegionChange(event.nativeEvent.src);
+  mixins: [NativeMethodsMixin],
+  
+  _onChange(event) {
+    this.props.onRegionChange && this.props.onRegionChange(event.nativeEvent);
+  },
+  _onUserLocationUpdate(event) {
+    this.props.onUserLocationUpdate && this.props.onUserLocationUpdate(event.nativeEvent);
   },
   render() {
     return <ReactMapView
       {...this.props}
-      onChange={this.handleOnChange} />
+      onChange={this._onChange}
+      onUserLocationUpdate={this._onUserLocationUpdate} />
   }
 });
 
